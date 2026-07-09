@@ -66,7 +66,7 @@ CREATE TABLE productos (
     material           VARCHAR(60) NULL,
     precio_venta_mayor DECIMAL(10,2) NOT NULL,
     precio_unitario    DECIMAL(10,2) NOT NULL,
-    estado             VARCHAR(20) NOT NULL CONSTRAINT df_productos_estado DEFAULT 'Activo',
+    estado             VARCHAR(20) NOT NULL,
     CONSTRAINT fk_productos_categorias FOREIGN KEY (id_categoria) REFERENCES categorias(id_categoria),
     CONSTRAINT fk_productos_proveedores FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
 );
@@ -85,8 +85,7 @@ CREATE TABLE clientes (
     email          VARCHAR(100) NULL,
     direccion      VARCHAR(150) NULL,
     id_ciudad      INT NOT NULL,
-    CONSTRAINT fk_clientes_ciudades FOREIGN KEY (id_ciudad) REFERENCES ciudades(id_ciudad),
-    CONSTRAINT ck_clientes_tipo CHECK (tipo_cliente IN ('Mayorista','Minorista'))
+    CONSTRAINT fk_clientes_ciudades FOREIGN KEY (id_ciudad) REFERENCES ciudades(id_ciudad)
 );
 GO
 
@@ -117,8 +116,7 @@ CREATE TABLE promociones (
     porcentaje_descuento DECIMAL(5,2) NOT NULL,
     fecha_inicio         DATE NOT NULL,
     fecha_fin            DATE NOT NULL,
-    estado               VARCHAR(20) NOT NULL CONSTRAINT df_promociones_estado DEFAULT 'Activa',
-    CONSTRAINT ck_promociones_fechas CHECK (fecha_fin >= fecha_inicio)
+    estado               VARCHAR(20) NOT NULL CONSTRAINT df_promociones_estado DEFAULT 'Activa'
 );
 GO
 
@@ -138,8 +136,7 @@ CREATE TABLE ventas (
     CONSTRAINT fk_ventas_clientes FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente),
     CONSTRAINT fk_ventas_empleados FOREIGN KEY (id_empleado) REFERENCES empleados(id_empleado),
     CONSTRAINT fk_ventas_sucursales FOREIGN KEY (id_sucursal) REFERENCES sucursales(id_sucursal),
-    CONSTRAINT fk_ventas_promociones FOREIGN KEY (id_promocion) REFERENCES promociones(id_promocion),
-    CONSTRAINT ck_ventas_tipo CHECK (tipo_venta IN ('Mayorista','Minorista'))
+    CONSTRAINT fk_ventas_promociones FOREIGN KEY (id_promocion) REFERENCES promociones(id_promocion)
 );
 GO
 
@@ -169,8 +166,7 @@ CREATE TABLE inventario (
     observaciones     VARCHAR(150) NULL,
     CONSTRAINT fk_inventario_productos FOREIGN KEY (id_producto) REFERENCES productos(id_producto),
     CONSTRAINT fk_inventario_sucursales FOREIGN KEY (id_sucursal) REFERENCES sucursales(id_sucursal),
-    CONSTRAINT uq_inventario_producto_sucursal UNIQUE (id_producto, id_sucursal),
-    CONSTRAINT ck_inventario_estado CHECK (estado_inventario IN ('Disponible','Stock Bajo','Agotado'))
+    CONSTRAINT uq_inventario_producto_sucursal UNIQUE (id_producto, id_sucursal)
 );
 GO
 
@@ -188,8 +184,7 @@ CREATE TABLE movimientos_inventario (
     fecha_movimiento DATE NOT NULL,
     CONSTRAINT fk_mov_inv_productos FOREIGN KEY (id_producto) REFERENCES productos(id_producto),
     CONSTRAINT fk_mov_inv_sucursales FOREIGN KEY (id_sucursal) REFERENCES sucursales(id_sucursal),
-    CONSTRAINT fk_mov_inv_empleados FOREIGN KEY (id_empleado) REFERENCES empleados(id_empleado),
-    CONSTRAINT ck_mov_inv_tipo CHECK (tipo_movimiento IN ('Entrada','Salida'))
+    CONSTRAINT fk_mov_inv_empleados FOREIGN KEY (id_empleado) REFERENCES empleados(id_empleado)
 );
 GO
 
@@ -214,10 +209,11 @@ GO
 -- 14. TABLA historial_actividades 
 -- =====================================================================
 CREATE TABLE historial_actividades (
-    id_historial       INT IDENTITY(1,1) CONSTRAINT pk_historial_actividades PRIMARY KEY,
-    fecha               DATE NOT NULL,
-    usuario_responsable VARCHAR(80) NOT NULL,
-    descripcion          VARCHAR(300) NOT NULL
+    id_historial   INT IDENTITY(1,1) CONSTRAINT pk_historial_actividades PRIMARY KEY,
+    fecha          DATE NOT NULL,
+    id_empleado    INT NOT NULL,
+    descripcion    VARCHAR(300) NOT NULL,
+    CONSTRAINT fk_historial_empleados FOREIGN KEY (id_empleado) REFERENCES empleados(id_empleado)
 );
 GO
 
@@ -277,27 +273,27 @@ INSERT INTO sucursales (nombre_sucursal, id_ciudad, direccion, telefono) VALUES
 GO
 
 -- ----- productos (20) -----
-INSERT INTO productos (nombre_producto, id_categoria, id_proveedor, talla, color, material, precio_venta_mayor, precio_unitario) VALUES
-('Zapato Casual Cuero Marron', 1, 6, '39-44', 'Marron', 'Cuero genuino', 37.18, 46.66),
-('Zapato Casual Cuero Negro', 1, 2, '38-43', 'Negro', 'Cuero genuino', 26.25, 33.98),
-('Zapatilla Running Air Flex', 2, 6, '36-44', 'Azul/Blanco', 'Malla sintetica', 40.09, 55.54),
-('Zapatilla Urban Sport', 2, 7, '36-43', 'Gris', 'Malla y goma', 44.77, 56.74),
-('Zapatilla Training Pro', 2, 8, '37-44', 'Negro/Rojo', 'Sintetico transpirable', 30.66, 38.51),
-('Bota Industrial Alta', 3, 9, '39-45', 'Negro', 'Cuero reforzado', 24.56, 33.18),
-('Bota Campo Impermeable', 3, 1, '38-44', 'Cafe', 'Cuero engrasado', 18.8, 24.25),
-('Bota Militar Tactica', 3, 6, '39-45', 'Negro', 'Cuero y lona', 37.5, 50.96),
-('Sandalia Playera Unisex', 4, 10, '35-42', 'Varios', 'Caucho EVA', 24.61, 33.66),
-('Sandalia Confort Dama', 4, 7, '34-40', 'Beige', 'Sintetico suave', 42.28, 52.9),
-('Sandalia Trekking', 4, 8, '38-45', 'Verde', 'Poliuretano', 42.17, 58.6),
-('Zapato Formal Oxford', 5, 2, '39-44', 'Negro', 'Cuero pulido', 28.21, 36.14),
-('Zapato Formal Derby', 5, 3, '38-43', 'Cafe', 'Cuero legitimo', 46.72, 61.55),
-('Zapato Formal Mocasin', 5, 1, '38-44', 'Negro', 'Cuero suave', 20.78, 26.38),
-('Zapatilla Kids Colorful', 2, 9, '28-34', 'Multicolor', 'Sintetico ligero', 43.42, 59.52),
-('Zapato Casual Lona', 1, 4, '37-43', 'Azul', 'Lona reforzada', 42.21, 58.92),
-('Bota Dama Taco Cuadrado', 3, 3, '35-40', 'Negro', 'Cuero sintetico', 34.09, 49.25),
-('Sandalia Sport Velcro', 4, 5, '36-43', 'Gris/Verde', 'EVA y velcro', 29.36, 39.94),
-('Zapato Formal Charol', 5, 10, '38-43', 'Negro', 'Charol', 42.88, 58.9),
-('Zapatilla Skate Classic', 2, 5, '37-44', 'Blanco', 'Lona y goma', 43.85, 59.88);
+INSERT INTO productos (nombre_producto, id_categoria, id_proveedor, talla, color, material, precio_venta_mayor, precio_unitario, estado) VALUES
+('Zapato Casual Cuero Marron', 1, 6, '39-44', 'Marron', 'Cuero genuino', 37.18, 46.66, 'Activo'),
+('Zapato Casual Cuero Negro', 1, 2, '38-43', 'Negro', 'Cuero genuino', 26.25, 33.98, 'Activo'),
+('Zapatilla Running Air Flex', 2, 6, '36-44', 'Azul/Blanco', 'Malla sintetica', 40.09, 55.54, 'Activo'),
+('Zapatilla Urban Sport', 2, 7, '36-43', 'Gris', 'Malla y goma', 44.77, 56.74, 'Activo'),
+('Zapatilla Training Pro', 2, 8, '37-44', 'Negro/Rojo', 'Sintetico transpirable', 30.66, 38.51, 'Activo'),
+('Bota Industrial Alta', 3, 9, '39-45', 'Negro', 'Cuero reforzado', 24.56, 33.18, 'Activo'),
+('Bota Campo Impermeable', 3, 1, '38-44', 'Cafe', 'Cuero engrasado', 18.8, 24.25, 'Activo'),
+('Bota Militar Tactica', 3, 6, '39-45', 'Negro', 'Cuero y lona', 37.5, 50.96, 'Activo'),
+('Sandalia Playera Unisex', 4, 10, '35-42', 'Varios', 'Caucho EVA', 24.61, 33.66, 'Activo'),
+('Sandalia Confort Dama', 4, 7, '34-40', 'Beige', 'Sintetico suave', 42.28, 52.9, 'Activo'),
+('Sandalia Trekking', 4, 8, '38-45', 'Verde', 'Poliuretano', 42.17, 58.6, 'Activo'),
+('Zapato Formal Oxford', 5, 2, '39-44', 'Negro', 'Cuero pulido', 28.21, 36.14, 'Activo'),
+('Zapato Formal Derby', 5, 3, '38-43', 'Cafe', 'Cuero legitimo', 46.72, 61.55, 'Activo'),
+('Zapato Formal Mocasin', 5, 1, '38-44', 'Negro', 'Cuero suave', 20.78, 26.38, 'Activo'),
+('Zapatilla Kids Colorful', 2, 9, '28-34', 'Multicolor', 'Sintetico ligero', 43.42, 59.52, 'Activo'),
+('Zapato Casual Lona', 1, 4, '37-43', 'Azul', 'Lona reforzada', 42.21, 58.92, 'Activo'),
+('Bota Dama Taco Cuadrado', 3, 3, '35-40', 'Negro', 'Cuero sintetico', 34.09, 49.25, 'Activo'),
+('Sandalia Sport Velcro', 4, 5, '36-43', 'Gris/Verde', 'EVA y velcro', 29.36, 39.94, 'Activo'),
+('Zapato Formal Charol', 5, 10, '38-43', 'Negro', 'Charol', 42.88, 58.9, 'Activo'),
+('Zapatilla Skate Classic', 2, 5, '37-44', 'Blanco', 'Lona y goma', 43.85, 59.88, 'Activo');
 GO
 
 -- ----- clientes (30) -----
@@ -673,23 +669,20 @@ INSERT INTO devoluciones (id_venta, id_producto, id_empleado, cantidad, motivo, 
 GO
 
 -- ----- historial_actividades (15) -----
-INSERT INTO historial_actividades (fecha, usuario_responsable, descripcion) VALUES
-('2026-06-03', 'Diego Castillo', 'Se actualizo el stock de un producto'),
-('2026-03-17', 'Paola Naranjo', 'Se modifico el precio de un producto'),
-('2026-04-17', 'Diego Castillo', 'Se actualizo el stock de un producto'),
-('2026-06-26', 'Pedro Salinas', 'Se registro una nueva venta en el sistema'),
-('2026-04-21', 'Diego Castillo', 'Se actualizo la informacion de un cliente'),
-('2026-04-28', 'Ana Lopez', 'Se registro una nueva venta en el sistema'),
-('2026-06-04', 'Paola Naranjo', 'Se creo una nueva promocion'),
-('2026-01-03', 'Paola Naranjo', 'Se modifico el precio de un producto'),
-('2026-01-05', 'Sofia Andrade', 'Se registro una devolucion de cliente'),
-('2026-04-20', 'Sofia Andrade', 'Se registro el ingreso de mercaderia de un proveedor'),
-('2026-04-17', 'Diego Castillo', 'Se actualizo la informacion de un cliente'),
-('2026-01-26', 'Diego Castillo', 'Se creo una nueva promocion'),
-('2026-04-15', 'Ana Lopez', 'Se agrego un nuevo producto al catalogo'),
-('2026-03-27', 'Pedro Salinas', 'Se creo una nueva promocion'),
-('2026-04-24', 'Paola Naranjo', 'Se creo una nueva promocion');
-GO
-
-PRINT 'Base de datos calzado_db creada exitosamente';
+INSERT INTO historial_actividades (fecha, id_empleado, descripcion) VALUES
+('2026-06-03', 9, 'Se actualizo el stock de un producto'),
+('2026-03-17', 8, 'Se modifico el precio de un producto'),
+('2026-04-17', 10, 'Se actualizo el stock de un producto'),
+('2026-06-26', 4, 'Se registro una nueva venta en el sistema'),
+('2026-04-21', 9, 'Se actualizo la informacion de un cliente'),
+('2026-04-28', 1, 'Se registro una nueva venta en el sistema'),
+('2026-06-04', 7, 'Se creo una nueva promocion'),
+('2026-01-03', 8, 'Se modifico el precio de un producto'),
+('2026-01-05', 6, 'Se registro una devolucion de cliente'),
+('2026-04-20', 5, 'Se registro el ingreso de mercaderia de un proveedor'),
+('2026-04-17', 9, 'Se actualizo la informacion de un cliente'),
+('2026-01-26', 10, 'Se creo una nueva promocion'),
+('2026-04-15', 2, 'Se agrego un nuevo producto al catalogo'),
+('2026-03-27', 4, 'Se creo una nueva promocion'),
+('2026-04-24', 8, 'Se creo una nueva promocion');
 GO
