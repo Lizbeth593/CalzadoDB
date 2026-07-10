@@ -111,7 +111,7 @@ SELECT * FROM empleados;
 		JOIN categorias AS c
 		ON p.id_categoria = c.id_categoria
 		JOIN proveedores AS pr
-		ON pr.id_proveedor = pr.id_proveedor
+		ON p.id_proveedor = pr.id_proveedor
 		JOIN ciudades AS ci
 		ON pr.id_ciudad = ci.id_ciudad;
 
@@ -134,3 +134,102 @@ SELECT * FROM empleados;
 		JOIN clientes AS c
 		ON ci.id_ciudad = c.id_ciudad;
 		
+
+--11) Total vendido por vendedor 
+	
+	SELECT
+		e.nombres+' '+e.apellidos as vendedor,
+		COUNT(v.id_venta) as cantidad_venta,
+		SUM(v.total_venta) as total_vendido
+		FROM empleados e
+		JOIN ventas v ON e.id_empleado = v.id_empleado
+		GROUP BY e.nombres, e.apellidos;
+
+--12) Productos más vendidos 
+
+	SELECT
+		p.nombre_producto as producto,
+		SUM(dv.cantidad) as unidades_vendidas
+		FROM productos p 
+		JOIN detalle_venta dv ON dv.id_producto = p.id_producto
+		GROUP BY p.nombre_producto;
+
+--13) Ventas por mes 
+	
+	SELECT
+		DATENAME(MONTH, v.fecha_venta) as mes,
+		COUNT(v.id_venta) as total_ventas,
+		SUM(v.total_venta) as monto_total
+		FROM Ventas v
+		GROUP BY DATENAME(MONTH, v.fecha_venta), MONTH(v.fecha_venta)
+		ORDER BY MONTH(v.fecha_venta)
+
+--14) Compras por cliente 
+	
+	SELECT
+		c.nombres+' '+c.apellidos as cliente,
+		COUNT(v.id_venta) as cantidad_compras,
+		SUM(v.total_venta) as monto_acumulado
+		FROM clientes c
+		JOIN ventas v ON c.id_cliente = v.id_cliente
+		GROUP BY c.nombres, c.apellidos;
+
+--15) Devoluciones por vendedor 
+	
+	SELECT 
+		e.nombres + ' ' + e.apellidos as vendedor,
+		SUM(d.cantidad) as total_devoluciones
+		FROM empleados e
+		JOIN devoluciones d ON e.id_empleado = d.id_empleado
+		GROUP BY e.nombres, e.apellidos;
+
+--16) Clientes con compras superiores al promedio 
+
+	SELECT 
+		c.nombres + ' ' + c.apellidos AS cliente,
+		SUM(v.total_venta) as total_comprado
+		FROM clientes as c
+		JOIN ventas as v ON c.id_cliente = v.id_cliente
+		GROUP BY c.nombres, c.apellidos
+		HAVING SUM(v.total_venta) > (SELECT AVG(total_venta) FROM ventas);
+
+--17) Productos con precio mayor al promedio 
+
+	SELECT 
+		p.nombre_producto AS Producto,
+		p.precio_unitario AS Precio
+		FROM productos AS p
+		WHERE p.precio_unitario > (SELECT AVG(precio_unitario) FROM productos);
+
+--18) Vendedores con ventas superiores al promedio 
+
+	SELECT 
+		e.nombres + ' ' + e.apellidos AS Vendedor,
+		SUM(v.total_venta) AS TotalVendido
+		FROM empleados AS e
+		JOIN ventas AS v
+		ON e.id_empleado = v.id_empleado
+		GROUP BY e.nombres, e.apellidos
+		HAVING SUM(v.total_venta) > (SELECT AVG(total_venta) FROM ventas);
+
+--19) Productos que nunca se han vendido 
+	
+	SELECT 
+		p.id_producto AS IdProducto,
+		p.nombre_producto AS NombreProducto,
+		ISNULL(SUM(i.stock), 0) AS StockActual
+		FROM productos AS p
+		LEFT JOIN inventario AS i 
+		ON p.id_producto = i.id_producto
+		WHERE p.id_producto NOT IN (SELECT DISTINCT id_producto FROM detalle_venta)
+		GROUP BY p.id_producto, p.nombre_producto;
+
+--20) Clientes que no han realizado compras 
+	
+	SELECT 
+		c.id_cliente AS IdCliente,
+		c.nombres AS Nombres,
+		c.apellidos AS Apellidos,
+		c.telefono AS Teléfono
+		FROM clientes AS c
+		WHERE c.id_cliente NOT IN (SELECT DISTINCT id_cliente FROM ventas);
