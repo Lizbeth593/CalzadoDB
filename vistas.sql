@@ -73,9 +73,50 @@ GO
 
 SELECT * FROM vw_prooductos_stock;
 
+--4) Promociones aplicada
 
+CREATE VIEW vw_promociones_aplicadas as
+SELECT 
+    v.id_venta AS IdVenta,
+    c.nombres + ' ' + c.apellidos as cliente,
+    pr.nombre_promocion as promocion,
+    ISNULL(ROUND((SELECT SUM(dv.cantidad * dv.precio_unitario) 
+	FROM detalle_venta dv WHERE dv.id_venta = v.id_venta) * (pr.porcentaje_descuento / 100.0), 2), 0) as descuento_aplicado,
+    v.fecha_venta AS fecha_venta
+FROM ventas v
+JOIN clientes c ON v.id_cliente = c.id_cliente
+JOIN promociones pr ON v.id_promocion = pr.id_promocion;
+GO
 
+-- 5) Devoluciones
 
+CREATE VIEW vw_devoluciones AS
+SELECT 
+    d.id_devolucion AS IdDevolución,
+    d.fecha_devolucion as fecha,
+    c.nombres + ' ' + c.apellidos as cliente,
+    p.nombre_producto as producto,
+    d.cantidad as cantidad,
+    d.motivo as motivo
+FROM devoluciones d
+JOIN productos p ON d.id_producto = p.id_producto
+JOIN ventas v ON d.id_venta = v.id_venta
+JOIN clientes c ON v.id_cliente = c.id_cliente;
+GO
+
+-- 6) desempeno vendedoress
+
+CREATE VIEW v_DesempenoVendedores AS
+SELECT 
+    e.id_empleado AS IdEmpleado,
+    e.nombres + ' ' + e.apellidos as nombre_empleado,
+    COUNT(DISTINCT v.id_venta) as total_ventas,
+    ISNULL(SUM(v.total_venta), 0) as monto,
+    ISNULL((SELECT SUM(d.cantidad) FROM devoluciones d WHERE d.id_empleado = e.id_empleado), 0) as total_devoluciones
+FROM empleados e
+LEFT JOIN ventas v ON e.id_empleado = v.id_empleado
+GROUP BY e.id_empleado, e.nombres, e.apellidos;
+GO
 
 
 
