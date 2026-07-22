@@ -43,20 +43,29 @@ END;
 SELECT dbo.calcular_descuento(200.00, 15) AS Descuento;
 
 
--- 3) Calcular precio segun el cliente 
+-- 3) Calcular total vendido por sucursal 
 
-CREATE FUNCTION precio_segun_cliente (@id_producto INT, @tipo_cliente VARCHAR(20)) 
-RETURNS DECIMAL(10,2) 
-AS 
-BEGIN 
-    DECLARE @precio DECIMAL(10,2); 
-    IF @tipo_cliente = 'Mayorista' 
-        SELECT @precio = precio_venta_mayor FROM productos WHERE id_producto = @id_producto; 
-    ELSE 
-        SELECT @precio = precio_unitario FROM productos WHERE id_producto = @id_producto; 
-    RETURN @precio; 
+CREATE FUNCTION total_ventas_sucursal
+(
+    @id_sucursal INT
+)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT
+        s.nombre_sucursal,
+        SUM(v.total_venta) AS total_ventas
+    FROM sucursales AS s
+    INNER JOIN ventas AS v
+    ON s.id_sucursal = v.id_sucursal
+    WHERE s.id_sucursal = @id_sucursal
+    GROUP BY s.nombre_sucursal
+);
+GO 
 
-END; 
+SELECT * FROM dbo.total_ventas_sucursal(1);
+
 
 -- 4) Calcular Comision
 
