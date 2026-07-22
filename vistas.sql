@@ -117,14 +117,3 @@ FROM empleados e
 LEFT JOIN ventas v ON e.id_empleado = v.id_empleado
 GROUP BY e.id_empleado, e.nombres, e.apellidos;
 GO
-
-
-
-
-
-
-
-
-
-
-
