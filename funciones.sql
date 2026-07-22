@@ -43,30 +43,20 @@ END;
 SELECT dbo.calcular_descuento(200.00, 15) AS Descuento;
 
 
--- 3) Calcular edad
+-- 3) Calcular precio segun el cliente 
 
-CREATE FUNCTION calcular_edad (
-    @fecha_nacimiento DATE
-)
-RETURNS INT
-AS
-BEGIN
-    DECLARE @edad INT;
-    
-    IF @fecha_nacimiento IS NULL
-        SET @edad = 0;
-    ELSE
-        SET @edad = DATEDIFF(YEAR, @fecha_nacimiento, GETDATE()) - 
-                    CASE 
-                        WHEN (MONTH(@fecha_nacimiento) > MONTH(GETDATE())) OR 
-                             (MONTH(@fecha_nacimiento) = MONTH(GETDATE()) AND DAY(@fecha_nacimiento) > DAY(GETDATE())) 
-                        THEN 1 
-                        ELSE 0 
-                    END;
-                    
-    RETURN @edad;
-END;
-GO
+CREATE FUNCTION precio_segun_cliente (@id_producto INT, @tipo_cliente VARCHAR(20)) 
+RETURNS DECIMAL(10,2) 
+AS 
+BEGIN 
+    DECLARE @precio DECIMAL(10,2); 
+    IF @tipo_cliente = 'Mayorista' 
+        SELECT @precio = precio_venta_mayor FROM productos WHERE id_producto = @id_producto; 
+    ELSE 
+        SELECT @precio = precio_unitario FROM productos WHERE id_producto = @id_producto; 
+    RETURN @precio; 
+
+END; 
 
 -- 4) Calcular Comision
 
