@@ -14,6 +14,15 @@ CREATE TABLE auditoria_clientes (
     fecha_accion     DATETIME       NOT NULL CONSTRAINT df_auditoria_clientes_fecha DEFAULT GETDATE()
 );
 
+CREATE TABLE auditoria (
+    id_auditoria INT IDENTITY(1,1) PRIMARY KEY,
+    accion VARCHAR(MAX),
+    usuario VARCHAR(100) DEFAULT SYSTEM_USER,
+    fecha_accion DATETIME DEFAULT GETDATE(),
+    tabla_afectada VARCHAR(50)
+);
+GO
+
 --1) Auditoria INSERT Clientes
 --Telefono 
 CREATE TRIGGER trg_clientes_insert
@@ -129,7 +138,10 @@ GO
 CREATE TRIGGER trg_RegistroCambioPrecio
 ON productos
 AFTER UPDATE
-AS BEGIN
+AS
+BEGIN
+    SET NOCOUNT ON;
+
     IF UPDATE(precio_unitario)
     BEGIN
         INSERT INTO auditoria (accion, usuario, fecha_accion, tabla_afectada)

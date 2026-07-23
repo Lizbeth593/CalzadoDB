@@ -1,3 +1,4 @@
+use calzado_db;
 --1) Listado de clientes 
 
 SELECT 
@@ -229,7 +230,7 @@ SELECT * FROM empleados;
 	SELECT 
 		c.id_cliente AS IdCliente,
 		c.nombres AS Nombres,
-		c.apellidos AS Apellidos,
+		c.apellidos AS Apellidos,p
 		c.telefono AS Teléfono
 		FROM clientes AS c
-		WHERE c.id_cliente NOT IN (SELECT DISTINCT id_cliente FROM ventas);
+		WHERE c.id_cliente NOT IN (SELECT DISTINCT id_cliente FROM ventas);p
