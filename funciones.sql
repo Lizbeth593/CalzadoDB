@@ -43,30 +43,29 @@ END;
 SELECT dbo.calcular_descuento(200.00, 15) AS Descuento;
 
 
--- 3) Calcular edad
+-- 3) Calcular total vendido por sucursal 
 
-CREATE FUNCTION calcular_edad (
-    @fecha_nacimiento DATE
+CREATE FUNCTION total_ventas_sucursal
+(
+    @id_sucursal INT
 )
-RETURNS INT
+RETURNS TABLE
 AS
-BEGIN
-    DECLARE @edad INT;
-    
-    IF @fecha_nacimiento IS NULL
-        SET @edad = 0;
-    ELSE
-        SET @edad = DATEDIFF(YEAR, @fecha_nacimiento, GETDATE()) - 
-                    CASE 
-                        WHEN (MONTH(@fecha_nacimiento) > MONTH(GETDATE())) OR 
-                             (MONTH(@fecha_nacimiento) = MONTH(GETDATE()) AND DAY(@fecha_nacimiento) > DAY(GETDATE())) 
-                        THEN 1 
-                        ELSE 0 
-                    END;
-                    
-    RETURN @edad;
-END;
-GO
+RETURN
+(
+    SELECT
+        s.nombre_sucursal,
+        SUM(v.total_venta) AS total_ventas
+    FROM sucursales AS s
+    INNER JOIN ventas AS v
+    ON s.id_sucursal = v.id_sucursal
+    WHERE s.id_sucursal = @id_sucursal
+    GROUP BY s.nombre_sucursal
+);
+GO 
+
+SELECT * FROM dbo.total_ventas_sucursal(1);
+
 
 -- 4) Calcular Comision
 
