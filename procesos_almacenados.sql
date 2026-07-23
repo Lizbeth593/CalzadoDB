@@ -5,21 +5,42 @@ GO
 
 -- 1) Registrar Clientes
 CREATE PROCEDURE sp_RegistrarCliente
-    @identificacion VARCHAR(13),
     @nombres VARCHAR(100),
     @apellidos VARCHAR(100),
+    @tipo_cliente VARCHAR(20),
+    @cedula_ruc VARCHAR(13),
     @telefono VARCHAR(15),
-    @correo VARCHAR(100)
+    @email VARCHAR(100),
+    @direccion VARCHAR(200),
+    @id_ciudad INT
 AS BEGIN
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM clientes WHERE identificacion = @identificacion OR correo = @correo)
+        IF EXISTS (SELECT 1 FROM clientes WHERE cedula_ruc = @cedula_ruc OR email = @email)
         BEGIN
-            RAISERROR('El cliente con esa identificacion o correo existe.', 16, 1);
+            RAISERROR('El cliente con esa identificacion o correo ya existe.', 16, 1);
             RETURN;
         END
 
-        INSERT INTO clientes (identificacion, nombres, apellidos, telefono, correo)
-        VALUES (@identificacion, @nombres, @apellidos, @telefono, @correo);
+        INSERT INTO clientes (
+            nombres, 
+            apellidos, 
+            tipo_cliente, 
+            cedula_ruc, 
+            telefono, 
+            email, 
+            direccion, 
+            id_ciudad
+        )
+        VALUES (
+            @nombres, 
+            @apellidos, 
+            @tipo_cliente, 
+            @cedula_ruc, 
+            @telefono, 
+            @email, 
+            @direccion, 
+            @id_ciudad
+        );
 
         PRINT 'Cliente registrado correctamente.';
     END TRY
@@ -44,8 +65,8 @@ AS BEGIN
 
         DECLARE @id_prod INT;
 
-        INSERT INTO productos (nombre_producto, precio_unitario, tipo_producto, id_categoria)
-        VALUES (@nombre, @precio, @tipoProducto, @id_categoria);
+        INSERT INTO productos (nombre_producto, precio_unitario, id_categoria)
+        VALUES (@nombre, @precio, @id_categoria);
 
         SET @id_prod = SCOPE_IDENTITY();
 
@@ -190,22 +211,21 @@ GO
 
 -- 7) Registrar Proveedor
 CREATE PROCEDURE sp_RegistrarProveedor
-    @ruc VARCHAR(13),
-    @nombre VARCHAR(100),
+    @nombre_proveedor VARCHAR(100),
     @telefono VARCHAR(15),
     @correo VARCHAR(100),
     @direccion VARCHAR(200)
 AS
 BEGIN
     BEGIN TRY
-        IF EXISTS (SELECT 1 FROM proveedores WHERE ruc = @ruc)
+        IF EXISTS (SELECT 1 FROM proveedores WHERE nombre_proveedor = @nombre_proveedor)
         BEGIN
             RAISERROR('El RUC del proveedor ya esta registrado.', 16, 1);
             RETURN;
         END
 
-        INSERT INTO proveedores (ruc, nombre_proveedor, telefono, correo, direccion)
-        VALUES (@ruc, @nombre, @telefono, @correo, @direccion);
+        INSERT INTO proveedores (nombre_proveedor, telefono, email, direccion)
+        VALUES (@nombre_proveedor, @telefono, @correo, @direccion);
 
         PRINT 'Proveedor registrado correctamente.';
     END TRY
