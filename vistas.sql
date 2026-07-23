@@ -68,7 +68,6 @@ SELECT
 	ON p.id_categoria = c.id_categoria
 	JOIN inventario AS i
 	ON i.id_producto = p.id_producto
-
 GO
 
 SELECT * FROM vw_prooductos_stock;
@@ -87,6 +86,7 @@ FROM ventas v
 JOIN clientes c ON v.id_cliente = c.id_cliente
 JOIN promociones pr ON v.id_promocion = pr.id_promocion;
 GO
+SELECT *FROM vw_promociones_aplicadas
 
 -- 5) Devoluciones
 
@@ -104,9 +104,11 @@ JOIN ventas v ON d.id_venta = v.id_venta
 JOIN clientes c ON v.id_cliente = c.id_cliente;
 GO
 
+SELECT *FROM vw_devoluciones
+
 -- 6) desempeno vendedoress
 
-CREATE VIEW v_DesempenoVendedores AS
+CREATE VIEW vw_DesempenoVendedores AS
 SELECT 
     e.id_empleado AS IdEmpleado,
     e.nombres + ' ' + e.apellidos as nombre_empleado,
@@ -117,3 +119,5 @@ FROM empleados e
 LEFT JOIN ventas v ON e.id_empleado = v.id_empleado
 GROUP BY e.id_empleado, e.nombres, e.apellidos;
 GO
+
+SELECT *FROM vw_DesempenoVendedores

@@ -84,6 +84,7 @@ GRANT SELECT ON dbo.ventas TO rol_vendedor;
 ALTER ROLE rol_vendedor ADD MEMBER usuario_vendedor;
 
 -- 9) Auditor 
+CREATE ROLE rol_auditor;
 
 GRANT SELECT ON historial_actividades TO rol_auditor;
 DENY INSERT, UPDATE, DELETE ON historial_actividades TO rol_auditor;

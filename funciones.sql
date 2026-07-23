@@ -1,5 +1,5 @@
 --FUNCIONES
-
+use calzado_db
 --1) Calcular IVA
 
 CREATE FUNCTION calcular_iva 
@@ -43,29 +43,30 @@ END;
 SELECT dbo.calcular_descuento(200.00, 15) AS Descuento;
 
 
--- 3) Calcular total vendido por sucursal 
+-- 3) Calcular edad
 
-CREATE FUNCTION total_ventas_sucursal
-(
-    @id_sucursal INT
+CREATE FUNCTION calcular_edad (
+    @fecha_nacimiento DATE
 )
-RETURNS TABLE
+RETURNS INT
 AS
-RETURN
-(
-    SELECT
-        s.nombre_sucursal,
-        SUM(v.total_venta) AS total_ventas
-    FROM sucursales AS s
-    INNER JOIN ventas AS v
-    ON s.id_sucursal = v.id_sucursal
-    WHERE s.id_sucursal = @id_sucursal
-    GROUP BY s.nombre_sucursal
-);
-GO 
-
-SELECT * FROM dbo.total_ventas_sucursal(1);
-
+BEGIN
+    DECLARE @edad INT;
+    
+    IF @fecha_nacimiento IS NULL
+        SET @edad = 0;
+    ELSE
+        SET @edad = DATEDIFF(YEAR, @fecha_nacimiento, GETDATE()) - 
+                    CASE 
+                        WHEN (MONTH(@fecha_nacimiento) > MONTH(GETDATE())) OR 
+                             (MONTH(@fecha_nacimiento) = MONTH(GETDATE()) AND DAY(@fecha_nacimiento) > DAY(GETDATE())) 
+                        THEN 1 
+                        ELSE 0 
+                    END;
+                    
+    RETURN @edad;
+END;
+GO
 
 -- 4) Calcular Comision
 
@@ -87,9 +88,11 @@ BEGIN
         SET @comision = @total_ventas * 0.03;
     END
 
-    RETURN @comision;
+    RETURN @comision; 
 END;
 GO
+
+SELECT dbo.calcular_comision(2) as Comision
 
 -- 5) Productos Bajo Stock
 
@@ -111,6 +114,8 @@ RETURN (
     HAVING SUM(i.stock) < @stock_minimo
 );
 GO
+
+SELECT *FROM dbo.productos_bajo_stock(1000)
 
 -- 6) Clientes frecuentes
 
@@ -134,4 +139,4 @@ RETURN (
 );
 GO
 
-
+SELECT * FROM dbo.clientes_frecuentes(3, 100.00);

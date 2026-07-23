@@ -108,16 +108,27 @@ GO
 
 --5) Incrementar stock por devolucion
 
-CREATE TRIGGER trg_IncrementarStockPorDevolucion
+CREATE OR ALTER TRIGGER trg_IncrementarStockPorDevolucion
 ON devoluciones
 AFTER INSERT
-AS BEGIN
+AS 
+BEGIN
+    SET NOCOUNT ON;
+
     UPDATE i
-    SET i.stock = i.stock + ins.cantidad
+    SET i.stock = i.stock + v.cantidad
     FROM inventario i
-    INNER JOIN inserted ins ON i.id_producto = ins.id_producto;
+    INNER JOIN (
+        SELECT dev.id_venta, dv.id_producto, v.id_sucursal, dv.cantidad
+        FROM inserted dev
+        INNER JOIN ventas v ON dev.id_venta = v.id_venta
+        INNER JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+    ) v ON i.id_producto = v.id_producto AND i.id_sucursal = v.id_sucursal;
 END;
 GO
+
+INSERT INTO devoluciones (id_venta, fecha_devolucion, motivo)
+VALUES (1, GETDATE(), 'Producto defectuoso');
 
 --6) Control stock negativo
 
@@ -133,9 +144,11 @@ AS BEGIN
 END;
 GO
 
+UPDATE inventario SET stock = -5 WHERE id_inventario = 1;
+
 -- 7) Registro de cambio de precio
 
-CREATE TRIGGER trg_RegistroCambioPrecio
+CREATE OR ALTER TRIGGER trg_RegistroCambioPrecio
 ON productos
 AFTER UPDATE
 AS
@@ -146,25 +159,42 @@ BEGIN
     BEGIN
         INSERT INTO auditoria (accion, usuario, fecha_accion, tabla_afectada)
         SELECT 
-            'CAMBIO PRECIO: Anterior $' + CAST(d.precio_unitario AS VARCHAR) + ' / Nuevo $' + CAST(i.precio_unitario AS VARCHAR),
+            CONCAT('CAMBIO PRECIO: Anterior $', d.precio_unitario, ' / Nuevo $', i.precio_unitario),
             SYSTEM_USER,
             GETDATE(),
             'productos'
         FROM inserted i
-        JOIN deleted d ON i.id_producto = d.id_producto;
+        INNER JOIN deleted d ON i.id_producto = d.id_producto
+        WHERE i.precio_unitario <> d.precio_unitario; 
     END
 END;
 GO
 
+UPDATE productos SET precio_unitario = 45.50 WHERE id_producto = 1;
+
 -- 8) Registro de aacceso
 
-CREATE TRIGGER trg_RegistroAcceso
+CREATE OR ALTER TRIGGER trg_RegistroAcceso
 ON auditoria
 AFTER INSERT
 AS
 BEGIN
-    INSERT INTO auditoria (accion, usuario, fecha_accion, tabla_afectada)
-    VALUES ('Acceso al sistema - Hora: ' + CAST(CAST(GETDATE() AS TIME) AS VARCHAR(8)), SYSTEM_USER, GETDATE(), 'auditoria'
-    );
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM inserted WHERE accion LIKE 'Acceso al sistema%')
+    BEGIN
+        INSERT INTO auditoria (accion, usuario, fecha_accion, tabla_afectada)
+        VALUES (
+            CONCAT('Acceso al sistema - Hora: ', CONVERT(VARCHAR(8), GETDATE(), 108)), 
+            SYSTEM_USER, 
+            GETDATE(), 
+            'auditoria'
+        );
+    END
 END;
 GO
+
+INSERT INTO auditoria (accion, usuario, fecha_accion, tabla_afectada)
+VALUES ('Prueba de trigger', SYSTEM_USER, GETDATE(), 'test');
+
+SELECT *From auditoria;
